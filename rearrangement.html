@@ -46,7 +46,7 @@
                 </div>
                 
                 <p style="margin-top: 1rem; font-size: 0.7rem; color: #6f8aaa;">
-                    ⚠️ 数据文件：<code>data/Thy-基因重排类型-260331(无CR).xlsx</code> | 第一列物种名，第二列TYPE，后续为基因顺序
+                    ⚠️ 数据文件：<code>data/gene_order.xlsx.xlsx</code> | 第一列物种名，第二列TYPE，后续为基因顺序
                 </p>
             </div>
         </div>
@@ -95,7 +95,7 @@
             renderTable(rawData);
             
         } catch (error) {
-            loadingDiv.innerHTML = `<div class="error">❌ 加载失败：${error.message}<br>请确保 data/Thy-基因重排类型-260331(无CR).xlsx 文件存在</div>`;
+            loadingDiv.innerHTML = `<div class="error">❌ 加载失败：${error.message}<br>请确保 data/gene_order.xlsx.xlsx 文件存在</div>`;
         }
     }
     
