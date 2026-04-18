@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GB 文件预览 - Demosponge Lab</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* 额外样式 */
+        .gb-card {
+            background: #fbfdfe;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .gb-card h2 {
+            font-size: 1.3rem;
+            color: #1a5d7a;
+            margin-bottom: 0.5rem;
+        }
+        .gb-card .file-info {
+            font-size: 0.8rem;
+            color: #6f8aaa;
+            margin-bottom: 1rem;
+        }
+        .preview-area {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+            max-height: 400px;
+            overflow: auto;
+        }
+        pre {
+            font-family: 'Consolas', monospace;
+            font-size: 10px;
+            margin: 0;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .download-btn {
+            background: #1a5d7a;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        .download-btn:hover {
+            background: #0f4a62;
+        }
+        .line-count {
+            font-size: 0.75rem;
+            color: #6f8aaa;
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <aside class="sidebar">
+        <div class="sidebar-inner">
+            <div class="site-title">
+                <h1>Demosponge<br>系统发育基因组学</h1>
+                <div class="version">2.0 版本</div>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item"><a href="index.html" class="nav-link">🏠 首页</a></li>
+                <li class="nav-item"><a href="rearrangement.html" class="nav-link">🧬 基因重排类型</a></li>
+                <li class="nav-item"><a href="gb-viewer.html" class="nav-link active">📖 GB 文件预览</a></li>
+            </ul>
+        </div>
+        <div class="sidebar-footer">
+            <p>Lavrov Lab @ Iowa State Univ</p>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <!-- GB 文件卡片列表 -->
+        <div id="gbContainer" class="content-pane"></div>
+    </main>
+</div>
+
+<script>
+    // ==================== 配置你的 GB 文件列表 ====================
+    const gbFiles = [
+        {
+            name: "Fulmekiola serrata",
+            path: "files/PP861183.gb",
+            description: "线粒体基因组 - 全长 16,596 bp"
+        },
+        {
+            name: "3 documents from 100Thy_gb",
+            path: "files/3 documents from 100Thy_gb.gb",
+            description: "线粒体基因组数据"
+        }
+        // 继续添加更多文件...
+    ];
+    // ==============================================================
+
+    // 预览行数限制
+    const PREVIEW_LINES = 300;
+
+    // 加载单个 GB 文件
+    async function loadGBFile(fileConfig, containerId) {
+        const previewDiv = document.getElementById(`${containerId}_preview`);
+        const lineCountSpan = document.getElementById(`${containerId}_lines`);
+        
+        try {
+            const response = await fetch(fileConfig.path);
+            if (!response.ok) throw new Error(`文件不存在：${fileConfig.path}`);
+            
+            const content = await response.text();
+            const lines = content.split('\n');
+            const totalLines = lines.length;
+            
+            // 限制预览行数
+            const previewLines = lines.slice(0, PREVIEW_LINES).join('\n');
+            const moreInfo = totalLines > PREVIEW_LINES 
+                ? `\n\n... 共 ${totalLines} 行，以上仅显示前 ${PREVIEW_LINES} 行 ...` 
+                : '';
+            
+            previewDiv.textContent = previewLines + moreInfo;
+            if (lineCountSpan) lineCountSpan.textContent = totalLines;
+            
+        } catch (error) {
+            previewDiv.innerHTML = `❌ 加载失败：${error.message}`;
+            if (lineCountSpan) lineCountSpan.textContent = '加载失败';
+        }
+    }
+
+    // 下载单个 GB 文件
+    async function downloadGBFile(filePath, fileName) {
+        try {
+            const response = await fetch(filePath);
+            if (!response.ok) throw new Error('文件不存在');
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            alert(`下载失败：${error.message}`);
+        }
+    }
+
+    // 生成所有卡片
+    function renderCards() {
+        const container = document.getElementById('gbContainer');
+        container.innerHTML = '';
+        
+        gbFiles.forEach((file, index) => {
+            const cardId = `gb_card_${index}`;
+            const previewId = `preview_${index}`;
+            const linesId = `lines_${index}`;
+            
+            const card = document.createElement('div');
+            card.className = 'gb-card';
+            card.innerHTML = `
+                <h2>📖 ${escapeHtml(file.name)}</h2>
+                <div class="file-info">${escapeHtml(file.description)}</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <button class="download-btn" data-file-path="${escapeAttr(file.path)}" data-file-name="${escapeAttr(file.name.replace(/\.gb$/i, '') + '.gb')}">
+                        📥 下载 GB 文件 (.gb)
+                    </button>
+                    <span class="line-count">📊 共 <span id="${linesId}">加载中...</span> 行</span>
+                </div>
+                <div class="preview-area">
+                    <pre id="${previewId}">⏳ 加载中...</pre>
+                </div>
+                <p style="margin-top: 0.8rem; font-size: 0.7rem; color: #6f8aaa;">
+                    ⚠️ 数据文件：<code>${escapeHtml(file.path)}</code> | 点击下载按钮可保存完整文件，用 Geneious 打开
+                </p>
+            `;
+            container.appendChild(card);
+            
+            // 绑定下载按钮事件
+            const downloadBtn = card.querySelector('.download-btn');
+            if (downloadBtn) {
+                const filePath = downloadBtn.getAttribute('data-file-path');
+                const fileName = downloadBtn.getAttribute('data-file-name');
+                downloadBtn.addEventListener('click', () => downloadGBFile(filePath, fileName));
+            }
+            
+            // 加载文件内容
+            loadGBFile(file, `preview_${index}`, `lines_${index}`);
+        });
+    }
+    
+    // 重写 loadGBFile 以支持动态 ID
+    async function loadGBFile(fileConfig, previewId, linesId) {
+        const previewDiv = document.getElementById(previewId);
+        const lineCountSpan = document.getElementById(linesId);
+        
+        if (!previewDiv) return;
+        
+        try {
+            const response = await fetch(fileConfig.path);
+            if (!response.ok) throw new Error(`文件不存在：${fileConfig.path}`);
+            
+            const content = await response.text();
+            const lines = content.split('\n');
+            const totalLines = lines.length;
+            
+            const previewLines = lines.slice(0, PREVIEW_LINES).join('\n');
+            const moreInfo = totalLines > PREVIEW_LINES 
+                ? `\n\n... 共 ${totalLines} 行，以上仅显示前 ${PREVIEW_LINES} 行 ...` 
+                : '';
+            
+            previewDiv.textContent = previewLines + moreInfo;
+            if (lineCountSpan) lineCountSpan.textContent = totalLines;
+            
+        } catch (error) {
+            previewDiv.innerHTML = `❌ 加载失败：${error.message}`;
+            if (lineCountSpan) lineCountSpan.textContent = '加载失败';
+        }
+    }
+    
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+    
+    function escapeAttr(str) {
+        if (!str) return '';
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    
+    // 初始化
+    renderCards();
+</script>
+</body>
+</html>

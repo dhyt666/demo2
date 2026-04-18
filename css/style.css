@@ -1,0 +1,230 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', 'Roboto', sans-serif;
+    background: #f0f4f8;
+    color: #1a2a3a;
+}
+
+.app-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* 侧边栏 */
+.sidebar {
+    width: 280px;
+    background: #ffffff;
+    border-right: 1px solid #e2e8f0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.sidebar-inner {
+    padding: 2rem 1.2rem;
+}
+
+.site-title h1 {
+    font-size: 1.4rem;
+    color: #1a5d7a;
+    border-left: 4px solid #1a7f9e;
+    padding-left: 12px;
+    margin-bottom: 0.4rem;
+}
+
+.site-title .version {
+    font-size: 0.7rem;
+    color: #6f8faa;
+    margin-bottom: 1.8rem;
+    margin-top: 6px;
+    padding-left: 16px;
+}
+
+.nav-menu {
+    list-style: none;
+}
+
+.nav-item {
+    margin-bottom: 0.2rem;
+}
+
+.nav-link {
+    display: block;
+    padding: 10px 12px;
+    color: #2c4c6c;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: 0.2s;
+}
+
+.nav-link:hover {
+    background: #e9f0f5;
+    color: #0f6b8c;
+}
+
+.nav-link.active {
+    background: #e0f0f7;
+    color: #0f6b8c;
+    font-weight: 600;
+}
+
+.sidebar-footer {
+    padding: 1rem 1.2rem;
+    border-top: 1px solid #e2e8f0;
+    font-size: 0.65rem;
+    color: #6a8aaa;
+}
+
+/* 主内容区 */
+.main-content {
+    flex: 1;
+    background: #ffffff;
+}
+
+.content-pane {
+    padding: 2rem 2.5rem;
+    max-width: 1400px;
+}
+
+/* 卡片样式 */
+.card {
+    background: #fbfdfe;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 1.8rem;
+    margin-bottom: 1.8rem;
+}
+
+.card h2 {
+    font-size: 1.5rem;
+    color: #1a5d7a;
+    margin-bottom: 1rem;
+}
+
+.card h3 {
+    font-size: 1.2rem;
+    color: #2c6280;
+    margin: 1rem 0 0.5rem 0;
+}
+
+/* 按钮 */
+.btn {
+    background: #1a5d7a;
+    color: white;
+    padding: 8px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn:hover {
+    background: #0f4a62;
+}
+
+/* 表格 */
+.table-container {
+    overflow-x: auto;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.75rem;
+    min-width: 600px;
+}
+
+th, td {
+    border: 1px solid #e2e8f0;
+    padding: 10px 12px;
+    text-align: left;
+}
+
+th {
+    background: #1a5d7a;
+    color: white;
+    position: sticky;
+    top: 0;
+}
+
+/* 基因表格专用 */
+.gene-cell.missing {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.gene-cell.present {
+    background: #dcfce7;
+    color: #166534;
+}
+
+/* 预览区 */
+.preview-area {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-top: 1rem;
+    max-height: 500px;
+    overflow: auto;
+}
+
+pre {
+    font-family: 'Consolas', monospace;
+    font-size: 11px;
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+/* 加载和错误 */
+.loading, .error {
+    padding: 40px;
+    text-align: center;
+}
+
+.error {
+    color: #c72a0f;
+}
+
+/* 搜索栏 */
+.search-bar {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.search-bar input {
+    padding: 8px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    width: 280px;
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+    .app-container {
+        flex-direction: column;
+    }
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+    }
+    .content-pane {
+        padding: 1.2rem;
+    }
+}

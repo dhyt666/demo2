@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>基因重排类型 - Demosponge Lab</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+<div class="app-container">
+    <aside class="sidebar">
+        <div class="sidebar-inner">
+            <div class="site-title">
+                <h1>Demosponge<br>系统发育基因组学</h1>
+                <div class="version">2.0 版本</div>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item"><a href="index.html" class="nav-link">🏠 首页</a></li>
+                <li class="nav-item"><a href="rearrangement.html" class="nav-link active">🧬 基因重排类型</a></li>
+                <li class="nav-item"><a href="gb-viewer.html" class="nav-link">📖 GB 文件预览</a></li>
+            </ul>
+        </div>
+        <div class="sidebar-footer">
+            <p>Lavrov Lab @ Iowa State Univ</p>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <div class="content-pane">
+            <div class="card">
+                <h2>🧬 基因重排类型 - 基因顺序表</h2>
+                <p>蓟马科线粒体基因组基因排列顺序（红色=缺失/重排，绿色=存在）</p>
+                
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="🔍 搜索物种名或 GenBank ID...">
+                    <div>📊 共 <span id="totalCount">0</span> 个物种</div>
+                </div>
+                
+                <div class="table-container">
+                    <div id="loadingMsg" class="loading">⏳ 正在读取 Excel 文件...</div>
+                    <table id="geneTable" style="display:none;">
+                        <thead id="tableHeader"></thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+                
+                <p style="margin-top: 1rem; font-size: 0.7rem; color: #6f8aaa;">
+                    ⚠️ 数据文件：<code>data/Thy-基因重排类型-260331(无CR).xlsx</code> | 第一列物种名，第二列TYPE，后续为基因顺序
+                </p>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    const excelPath = 'data/gene_order.xlsx';
+    let rawData = [];
+    let allGenes = [];
+
+    async function loadExcel() {
+        const loadingDiv = document.getElementById('loadingMsg');
+        const table = document.getElementById('geneTable');
+        
+        try {
+            const response = await fetch(excelPath);
+            if (!response.ok) throw new Error(`文件不存在：${excelPath}`);
+            
+            const arrayBuffer = await response.arrayBuffer();
+            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: "" });
+            
+            if (!rows || rows.length < 2) throw new Error('表格为空');
+            
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                if (!row[0]) continue;
+                const species = row[0] || '';
+                const type = row[1] !== undefined ? String(row[1]) : '';
+                const genes = [];
+                for (let j = 2; j < row.length; j++) {
+                    let gene = row[j];
+                    if (gene && typeof gene === 'string') gene = gene.trim();
+                    genes.push(gene || '');
+                }
+                rawData.push([species, type, ...genes]);
+            }
+            
+            if (rawData.length === 0) throw new Error('没有有效数据');
+            allGenes = rawData[0].slice(2);
+            
+            loadingDiv.style.display = 'none';
+            table.style.display = 'table';
+            renderTable(rawData);
+            
+        } catch (error) {
+            loadingDiv.innerHTML = `<div class="error">❌ 加载失败：${error.message}<br>请确保 data/Thy-基因重排类型-260331(无CR).xlsx 文件存在</div>`;
+        }
+    }
+    
+    function renderTable(data) {
+        let headerHtml = '<tr><th>物种 / GenBank ID</th><th>TYPE</th>';
+        for (let gene of allGenes) headerHtml += `<th>${escapeHtml(gene)}</th>`;
+        headerHtml += '</tr>';
+        document.getElementById('tableHeader').innerHTML = headerHtml;
+        
+        let bodyHtml = '';
+        for (let row of data) {
+            const species = row[0];
+            const type = row[1];
+            const genes = row.slice(2);
+            bodyHtml += '<tr>';
+            bodyHtml += `<td>${escapeHtml(species)}</td>`;
+            bodyHtml += `<td>${escapeHtml(type)}</td>`;
+            for (let i = 0; i < allGenes.length; i++) {
+                const geneValue = genes[i] || '';
+                const isMissing = String(geneValue).startsWith('-') || geneValue === '';
+                const cellClass = isMissing ? 'gene-cell missing' : 'gene-cell present';
+                bodyHtml += `<td class="${cellClass}">${escapeHtml(geneValue || '—')}</td>`;
+            }
+            bodyHtml += '</tr>';
+        }
+        document.getElementById('tableBody').innerHTML = bodyHtml;
+        document.getElementById('totalCount').innerText = data.length;
+    }
+    
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
+    }
+    
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+        const keyword = e.target.value.toLowerCase();
+        if (!keyword) renderTable(rawData);
+        else renderTable(rawData.filter(row => row[0].toLowerCase().includes(keyword)));
+    });
+    
+    loadExcel();
+</script>
+</body>
+</html>
